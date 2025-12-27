@@ -1,0 +1,14 @@
+{
+    "deepseek": {
+        "api_key": "your_deepseek_api_key_here",
+        "base_url": "https://api.deepseek.com/v1",
+        "model": "deepseek-chat",
+        "enabled": false
+    },
+    "ai_correction": {
+        "enabled": true,
+        "prompt_template": "请修正以下语音转录文本中的错误，包括标点符号、语法和用词，保持原意不变，只输出修正后的文本：\n\n{text}",
+        "max_tokens": 2000,
+        "temperature": 0.1
+    }
+}

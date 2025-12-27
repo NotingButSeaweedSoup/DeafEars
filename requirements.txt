@@ -1,0 +1,7 @@
+openai-whisper
+flask
+flask-cors
+requests
+pydub
+opencc-python-reimplemented
+httpx
