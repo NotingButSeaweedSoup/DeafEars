@@ -8,11 +8,25 @@ echo.
 REM 设置FFmpeg相对路径
 set "FFMPEG_PATH=%~dp0ffmpeg\ffmpeg-master-latest-win64-gpl\bin"
 if exist "%FFMPEG_PATH%\ffmpeg.exe" (
-    echo 设置FFmpeg路径: %FFMPEG_PATH%
+    echo ✓ 设置FFmpeg路径: %FFMPEG_PATH%
     set "PATH=%FFMPEG_PATH%;%PATH%"
 ) else (
-    echo 警告: 未找到FFmpeg，MP3文件可能无法处理
-    echo 提示: 运行 python install_ffmpeg.py 安装FFmpeg
+    echo ================================================
+    echo ⚠️  重要提醒: 未找到FFmpeg
+    echo    FFmpeg是处理MP3等音频格式的必需组件
+    echo    没有FFmpeg可能导致转录失败
+    echo.
+    echo    解决方案:
+    echo    1. 运行: python install_ffmpeg.py
+    echo    2. 或手动下载: https://ffmpeg.org/download.html
+    echo ================================================
+    echo.
+    set /p choice="是否继续启动? (y/N): "
+    if /i not "%choice%"=="y" (
+        echo 启动已取消
+        pause
+        exit /b
+    )
 )
 
 REM 激活虚拟环境（如果存在）

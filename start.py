@@ -39,8 +39,21 @@ class AppLauncher:
             else:
                 print("✓ FFmpeg路径已设置")
         else:
-            print("⚠ 未找到FFmpeg，MP3文件可能无法处理")
-            print("  提示: 运行 python install_ffmpeg.py 安装FFmpeg")
+            print("=" * 50)
+            print("⚠️  重要提醒: 未找到FFmpeg")
+            print("   FFmpeg是处理MP3等音频格式的必需组件")
+            print("   没有FFmpeg可能导致转录失败")
+            print("")
+            print("   解决方案:")
+            print("   1. 运行: python install_ffmpeg.py")
+            print("   2. 或手动下载: https://ffmpeg.org/download.html")
+            print("=" * 50)
+            
+            # 询问用户是否继续
+            choice = input("\n是否继续启动? (y/N): ").strip().lower()
+            if choice != 'y':
+                print("启动已取消")
+                sys.exit(0)
     
     def check_server_running(self):
         """检查服务器是否运行"""

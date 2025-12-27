@@ -1,225 +1,129 @@
-# DeafEars
+# DeafEars - 语音转文本系统
 
-DeafEars（中文：你尔多🐉吗）是一个基于客户端-服务器架构的语音转文本系统，使用OpenAI Whisper进行音频转录，支持繁简转换。
+基于OpenAI Whisper的语音转文本系统，支持繁简转换和AI辅助修正。
 
-## 系统架构
+## ✨ 主要特点
 
-- **服务器端 (server.py)**: 提供REST API，处理音频转录任务
-- **客户端 (client.py)**: 图形界面，与服务器交互
-- **启动器 (start.py)**: 一键启动服务器和客户端
-- **FFmpeg**: 本地集成，使用相对路径
-
-## 功能特点
-
-- 🎯 **C/S架构**: 服务器处理计算密集任务，客户端提供友好界面
 - 🎵 **多格式支持**: WAV, MP3, M4A, FLAC, AAC, OGG, WMA
 - 🌐 **多语言识别**: 中文、英文、自动检测
 - 🔄 **繁简转换**: 自动将繁体中文转换为简体中文
 - 🤖 **AI辅助修正**: 使用DeepSeek AI优化转录结果
 - 📁 **批量处理**: 支持文件夹批量转录
-- 💾 **结果管理**: 保存、复制、清空转录结果
-- 🔄 **实时状态**: 显示服务器和模型状态
-- 📦 **便携部署**: 使用相对路径，易于移植
-- ⚙️ **配置管理**: 图形化配置DeepSeek API
+- 🚀 **模型预下载**: 避免首次使用等待
 
-## 快速开始
+## 🚀 快速开始
 
 ### 1. 安装依赖
-
 ```bash
-# 激活虚拟环境
-.venv\Scripts\activate
-
-# 安装依赖包
 pip install -r requirements.txt
 ```
 
-### 2. 一键启动
-
-**方法一: 使用批处理文件 (推荐)**
+### 2. 安装FFmpeg（重要）
 ```bash
-start.bat
+# 自动安装FFmpeg（推荐）
+python install_ffmpeg.py
+
+# 或手动下载安装
+# 访问 https://ffmpeg.org/download.html
+```
+> ⚠️ **重要**: FFmpeg是处理MP3等音频格式的必需组件，不安装可能导致转录失败
+
+### 3. 预下载模型（推荐）
+```bash
+# 快速下载基础模型（约181MB）
+python quick_download.py
+
+# 或使用完整下载工具
+python download_models.py
 ```
 
-**方法二: 使用Python脚本**
+### 4. 启动系统
 ```bash
+# Windows用户
+start.bat
+
+# 或手动启动
 python start.py
 ```
 
-**方法三: 手动启动**
-```bash
-# 终端1: 启动服务器
-python server.py
-
-# 终端2: 启动客户端
-python client.py
-```
-
-## 使用说明
-
-### 客户端界面
-
-1. **服务器状态**: 显示服务器连接状态和模型加载情况
-2. **模型设置**: 选择Whisper模型大小和识别语言
-3. **单文件转录**: 选择单个音频文件进行转录
-4. **批量转录**: 选择文件夹进行批量处理
-5. **结果显示**: 查看转录结果，支持保存和复制
-6. **繁简转换**: 自动显示简体和繁体对比
+## 📖 使用说明
 
 ### 模型选择
 
 | 模型 | 大小 | 速度 | 准确度 | 推荐用途 |
 |------|------|------|--------|----------|
 | tiny | ~39MB | 最快 | 较低 | 快速测试 |
-| base | ~74MB | 快 | 平衡 | 日常使用 |
-| small | ~244MB | 中等 | 较好 | 高质量需求 |
-| medium | ~769MB | 慢 | 高 | 专业用途 |
-| large | ~1550MB | 最慢 | 最高 | 最高质量 |
+| base | ~142MB | 快 | 平衡 | 日常使用 |
+| small | ~466MB | 中等 | 较好 | 高质量需求 |
+| medium | ~1.5GB | 慢 | 高 | 专业用途 |
+| large | ~3.0GB | 最慢 | 最高 | 最高质量 |
 
-## AI辅助修正
+### 音频建议
 
-系统集成了DeepSeek AI来优化转录结果，可以修正语法错误、标点符号和用词不当等问题。
+- **理想时长**: 5-10分钟
+- **最大时长**: 15分钟
+- **超过30分钟**: 建议分割处理
+- **推荐格式**: WAV, MP3
+- **注意**: MP3格式需要FFmpeg支持
+
+## 🤖 AI辅助修正
 
 ### 配置DeepSeek API
 
-1. **获取API密钥**: 访问 [DeepSeek平台](https://platform.deepseek.com/) 注册并获取API密钥
-2. **打开AI配置**: 在客户端点击"AI配置"按钮
-3. **输入API密钥**: 填入获取的API密钥
-4. **启用功能**: 勾选"启用DeepSeek API"和"启用AI辅助修正"
-5. **保存配置**: 点击"保存配置"
+1. 访问 [DeepSeek平台](https://platform.deepseek.com/) 获取API密钥
+2. 在客户端点击"AI配置"按钮
+3. 输入API密钥并启用功能
+4. 保存配置
 
 ### 修正效果示例
 
-**原始转录:**
+**原始转录**: 你有什麼事沒聽清楚了換個方式再說一遍吧  
+**AI修正后**: 你有什么事没听清楚了，换个方式再说一遍吧。
+
+## 🛠️ 故障排除
+
+### 常见问题
+
+| 问题 | 解决方案 |
+|------|----------|
+| 模型下载失败 | `python quick_download.py` |
+| MP3文件无法处理 | `python install_ffmpeg.py` |
+| 检查FFmpeg状态 | `python check_ffmpeg.py` |
+| 转录超时 | 使用小模型，分割长音频 |
+| 服务器无法启动 | 检查端口5000是否被占用 |
+| AI修正失败 | 检查API密钥和网络连接 |
+
+### 系统诊断
+```bash
+python diagnose.py
 ```
-你有什麼事沒聽清楚了換個方式再說一遍吧
-```
 
-**繁简转换:**
-```
-你有什么事没听清楚了换个方式再说一遍吧
-```
-
-**AI修正后:**
-```
-你有什么事没听清楚了，换个方式再说一遍吧。
-```
-
-### 配置选项
-
-- **提示词模板**: 自定义AI修正的指令
-- **最大令牌数**: 限制AI响应长度
-- **温度**: 控制输出的随机性（0-1，越低越稳定）
-
-## API接口
-
-服务器提供以下REST API接口：
-
-- `GET /api/status` - 获取服务器状态
-- `POST /api/load_model` - 加载指定模型
-- `POST /api/transcribe` - 上传文件转录
-- `POST /api/transcribe_file` - 转录本地文件
-- `POST /api/batch_transcribe` - 批量转录文件夹
-
-## 文件结构
+## �  文件结构
 
 ```
+DeafEars/
 ├── server.py                    # 服务器端
 ├── client.py                    # 客户端GUI
-├── config_manager.py           # 配置管理器
-├── start.py                     # Python启动脚本
-├── start.bat                    # Windows批处理启动器
+├── start.py                     # 启动脚本
+├── start.bat                    # Windows启动器
+├── download_models.py           # 模型下载工具
+├── quick_download.py            # 快速下载基础模型
+├── diagnose.py                  # 系统诊断工具
+├── install_ffmpeg.py           # FFmpeg安装助手
+├── check_ffmpeg.py             # FFmpeg检查工具
 ├── config.json                  # 配置文件
 ├── requirements.txt             # 依赖包列表
-├── install_ffmpeg.py           # FFmpeg安装助手
-├── ffmpeg/                     # FFmpeg本地安装
-│   └── ffmpeg-master-latest-win64-gpl/
-│       └── bin/
-│           ├── ffmpeg.exe
-│           ├── ffplay.exe
-│           └── ffprobe.exe
-└── README.md                   # 说明文档
+├── README.md                   # 说明文档
+└── ffmpeg/                     # FFmpeg本地安装
 ```
 
-## 故障排除
-
-### 1. 依赖安装问题
-
-```bash
-# 更新pip
-python -m pip install --upgrade pip
-
-# 逐个安装
-pip install openai-whisper
-pip install flask flask-cors
-pip install requests
-pip install opencc-python-reimplemented
-```
-
-### 2. FFmpeg问题
-
-```bash
-# 自动安装FFmpeg
-python install_ffmpeg.py
-
-# 测试FFmpeg
-python test_ffmpeg.py
-```
-
-### 3. 服务器启动失败
-
-- 检查端口5000是否被占用
-- 确保防火墙允许本地连接
-- 查看服务器日志输出
-
-### 4. 模型下载慢
-
-- 首次使用会下载模型文件
-- 可以手动下载到 `~/.cache/whisper/`
-- 使用较小的模型进行测试
-
-### 5. 繁简转换问题
-
-```bash
-# 测试繁简转换
-python test_conversion.py
-```
-
-## 高级用法
-
-### 自定义服务器地址
-
-修改 `client.py` 中的 `server_url` 变量：
-
-```python
-self.server_url = "http://your-server:5000"
-```
-
-### 测试功能
-
-系统提供完整的GUI界面进行测试：
-
-1. **启动系统**: 运行 `start.bat` 或 `python start.py`
-2. **配置AI**: 点击"配置管理"设置DeepSeek API（可选）
-3. **选择文件**: 在GUI中选择MP3或其他音频文件
-4. **开始转录**: 勾选"AI辅助修正"，点击转录按钮
-5. **查看结果**: 对比原始转录、繁简转换和AI修正结果
-6. **批量处理**: 选择文件夹进行批量转录
-
-### 配置管理
-
-```bash
-# 单独运行配置管理器
-python config_manager.py
-```
-
-## 系统要求
+## 💻 系统要求
 
 - Python 3.8+
-- Windows/Linux/macOS
-- 至少2GB内存 (推荐4GB+)
-- 网络连接 (首次下载模型)
+- 内存: 2GB+ (推荐4GB+)
+- 磁盘: 5GB可用空间
+- 网络: 首次下载模型需要
 
-## 许可证
+## 📄 许可证
 
 本项目仅供学习和研究使用。

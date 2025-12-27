@@ -105,8 +105,8 @@ class WhisperServer:
                 "temperature": self.config["ai_correction"].get("temperature", 0.1)
             }
             
-            # 发送请求
-            with httpx.Client(timeout=30.0) as client:
+            # 发送请求，设置较短的超时时间
+            with httpx.Client(timeout=60.0) as client:  # 减少到60秒
                 response = client.post(f"{base_url}/chat/completions", 
                                      headers=headers, json=data)
                 response.raise_for_status()
@@ -117,6 +117,9 @@ class WhisperServer:
                 logger.info("AI文本修正完成")
                 return corrected_text, True
                 
+        except httpx.TimeoutException:
+            logger.error("AI文本修正超时，使用原始文本")
+            return text, False
         except Exception as e:
             logger.error(f"AI文本修正失败: {e}")
             return text, False
@@ -165,25 +168,46 @@ class WhisperServer:
             if not os.path.exists(audio_file):
                 return {"status": "error", "message": f"文件不存在: {audio_file}"}
             
+            # 检查文件大小
+            file_size = os.path.getsize(audio_file)
+            logger.info(f"文件大小: {file_size / 1024 / 1024:.2f} MB")
+            
+            # 如果文件过大，给出警告
+            if file_size > 100 * 1024 * 1024:  # 100MB
+                logger.warning(f"文件较大 ({file_size / 1024 / 1024:.2f} MB)，转录可能需要较长时间")
+            
             # 转录音频 - 让Whisper直接尝试处理
             transcribe_options = {
                 "language": language if language and language != 'auto' else None,
                 "fp16": False,  # 在CPU上禁用FP16
-                "verbose": False
+                "verbose": False,
+                "beam_size": 1,  # 减少beam search以提高速度
+                "best_of": 1,    # 减少候选数量以提高速度
+                "temperature": 0.0  # 使用确定性输出
             }
+            
+            logger.info("开始Whisper转录...")
+            start_time = time.time()
             
             # 直接尝试转录，Whisper内部会处理格式转换
             result = self.model.transcribe(audio_file, **transcribe_options)
+            
+            transcribe_time = time.time() - start_time
+            logger.info(f"Whisper转录完成，耗时: {transcribe_time:.2f} 秒")
             
             # 提取结果
             text = result["text"].strip()
             detected_language = result.get("language", "未知")
             segments = result.get("segments", [])
             
+            if not text:
+                return {"status": "error", "message": "转录结果为空，可能是音频文件损坏或格式不支持"}
+            
             # 如果是中文，转换为简体
             if detected_language == 'zh' or language == 'zh':
+                logger.info("开始繁简转换...")
                 simplified_text = self.convert_to_simplified(text)
-                logger.info("已转换为简体中文")
+                logger.info("繁简转换完成")
             else:
                 simplified_text = text
             
@@ -191,9 +215,14 @@ class WhisperServer:
             corrected_text = simplified_text
             ai_corrected = False
             if enable_ai_correction and (detected_language == 'zh' or language == 'zh'):
+                logger.info("开始AI文本修正...")
+                ai_start_time = time.time()
                 corrected_text, ai_corrected = self.ai_correct_text(simplified_text)
+                ai_time = time.time() - ai_start_time
+                logger.info(f"AI修正完成，耗时: {ai_time:.2f} 秒")
             
-            logger.info("转录完成")
+            total_time = time.time() - start_time
+            logger.info(f"转录完成，总耗时: {total_time:.2f} 秒")
             
             return {
                 "status": "success",
@@ -203,7 +232,9 @@ class WhisperServer:
                 "ai_corrected": ai_corrected,  # 是否进行了AI修正
                 "language": detected_language,
                 "segments": len(segments),
-                "duration": sum(seg.get('end', 0) - seg.get('start', 0) for seg in segments)
+                "duration": sum(seg.get('end', 0) - seg.get('start', 0) for seg in segments),
+                "processing_time": total_time,  # 添加处理时间信息
+                "file_size_mb": file_size / 1024 / 1024  # 添加文件大小信息
             }
             
         except Exception as e:
@@ -243,15 +274,12 @@ def load_model():
     data = request.get_json()
     model_size = data.get('model_size', 'base')
     
-    # 在后台线程中加载模型
-    def load_in_background():
-        whisper_server.load_model(model_size)
-    
-    if not whisper_server.is_loading:
-        threading.Thread(target=load_in_background, daemon=True).start()
-        return jsonify({"status": "success", "message": "开始加载模型..."})
-    else:
+    if whisper_server.is_loading:
         return jsonify({"status": "error", "message": "模型正在加载中..."})
+    
+    # 直接在当前线程中加载模型，而不是后台线程
+    result = whisper_server.load_model(model_size)
+    return jsonify(result)
 
 @app.route('/api/transcribe', methods=['POST'])
 def transcribe():

@@ -296,20 +296,11 @@ class AudioToTextClient:
                 self.root.after(0, lambda: self.progress.start())
                 
                 response = requests.post(f"{self.server_url}/api/load_model", 
-                                       json={"model_size": model_size}, timeout=30)
+                                       json={"model_size": model_size}, timeout=60)
                 
                 if response.status_code == 200:
                     data = response.json()
                     if data["status"] == "success":
-                        # 等待模型加载完成
-                        while True:
-                            status_response = requests.get(f"{self.server_url}/api/status", timeout=3)
-                            if status_response.status_code == 200:
-                                status_data = status_response.json()
-                                if not status_data["is_loading"] and status_data["model_loaded"]:
-                                    break
-                            time.sleep(1)
-                        
                         self.root.after(0, lambda: messagebox.showinfo("成功", f"模型 {model_size} 加载成功"))
                         self.root.after(0, self.check_server_status)
                     else:
@@ -318,7 +309,8 @@ class AudioToTextClient:
                     self.root.after(0, lambda: messagebox.showerror("错误", "服务器请求失败"))
                     
             except requests.exceptions.RequestException as e:
-                self.root.after(0, lambda: messagebox.showerror("错误", f"网络错误: {str(e)}"))
+                error_msg = f"网络错误: {str(e)}"
+                self.root.after(0, lambda: messagebox.showerror("错误", error_msg))
             finally:
                 self.root.after(0, lambda: self.progress.stop())
         
@@ -367,7 +359,7 @@ class AudioToTextClient:
                 }
                 
                 response = requests.post(f"{self.server_url}/api/transcribe_file", 
-                                       json=data, timeout=120)
+                                       json=data, timeout=300)  # 增加到5分钟
                 
                 if response.status_code == 200:
                     result = response.json()
@@ -416,7 +408,8 @@ class AudioToTextClient:
                     self.root.after(0, lambda: messagebox.showerror("错误", "服务器请求失败"))
                     
             except requests.exceptions.RequestException as e:
-                self.root.after(0, lambda: messagebox.showerror("错误", f"网络错误: {str(e)}"))
+                error_msg = f"网络错误: {str(e)}"
+                self.root.after(0, lambda: messagebox.showerror("错误", error_msg))
             finally:
                 self.root.after(0, lambda: self.progress.stop())
         
@@ -501,11 +494,28 @@ class AudioToTextClient:
                     self.root.after(0, lambda: messagebox.showerror("错误", "服务器请求失败"))
                     
             except requests.exceptions.RequestException as e:
-                self.root.after(0, lambda: messagebox.showerror("错误", f"网络错误: {str(e)}"))
+                error_msg = f"网络错误: {str(e)}"
+                self.root.after(0, lambda: messagebox.showerror("错误", error_msg))
             finally:
                 self.root.after(0, lambda: self.progress.stop())
         
         threading.Thread(target=transcribe, daemon=True).start()
+    
+    def append_result(self, text):
+        """向结果区域追加文本"""
+        # 根据AI配置决定追加到哪个文本框
+        ai_enabled = (self.config["deepseek"].get("enabled", False) and 
+                     self.config["deepseek"].get("api_key") and 
+                     self.ai_correction_var.get())
+        
+        if ai_enabled:
+            # AI启用时，追加到AI结果框
+            self.ai_result_text.insert(tk.END, text)
+            self.ai_result_text.see(tk.END)
+        else:
+            # AI未启用时，追加到简体结果框
+            self.simplified_result_text.insert(tk.END, text)
+            self.simplified_result_text.see(tk.END)
     
     def clear_results(self):
         """清空所有结果"""
